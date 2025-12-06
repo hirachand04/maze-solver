@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Solver Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            width: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-generate {
+            background: #4CAF50;
+        }
+
+        .btn-generate:hover {
+            background: #45a049;
+        }
+
+        .btn-bfs {
+            background: #2196F3;
+        }
+
+        .btn-bfs:hover {
+            background: #0b7dda;
+        }
+
+        .btn-dfs {
+            background: #FF9800;
+        }
+
+        .btn-dfs:hover {
+            background: #e68900;
+        }
+
+        .btn-reset {
+            background: #f44336;
+        }
+
+        .btn-reset:hover {
+            background: #da190b;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #mazeCanvas {
+            border: 3px solid #333;
+            border-radius: 5px;
+            background: white;
+            max-width: 100%;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #333;
+            border-radius: 3px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .control-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌀 Maze Solver Visualizer</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="rows">Rows:</label>
+                <input type="number" id="rows" value="20" min="5" max="50">
+            </div>
+
+            <div class="control-group">
+                <label for="cols">Cols:</label>
+                <input type="number" id="cols" value="20" min="5" max="50">
+            </div>
+
+            <button class="btn-generate" onclick="generateMaze()">🎲 Generate Maze</button>
+            <button class="btn-bfs" onclick="solveMaze('bfs')" id="btnBfs" disabled>🔍 Solve (BFS)</button>
+            <button class="btn-dfs" onclick="solveMaze('dfs')" id="btnDfs" disabled>🔍 Solve (DFS)</button>
+            <button class="btn-reset" onclick="resetVisualization()" id="btnReset" disabled>🔄 Reset</button>
+
+            <div class="control-group">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="1" max="100" value="50">
+                <span id="speedValue">50</span>
+            </div>
+        </div>
+
+        <div id="loadingMsg" class="loading" style="display: none;">Loading...</div>
+
+        <div class="canvas-container">
+            <canvas id="mazeCanvas" width="600" height="600"></canvas>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">Maze Size</div>
+                <div class="stat-value" id="statSize">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Algorithm</div>
+                <div class="stat-value" id="statAlgo">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Steps Taken</div>
+                <div class="stat-value" id="statSteps">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Path Length</div>
+                <div class="stat-value" id="statPath">-</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #000000;"></div>
+                <span>Wall</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFFFFF;"></div>
+                <span>Path</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4A90E2;"></div>
+                <span>Visited</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00FF00;"></div>
+                <span>Solution</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let currentMaze = null;
+        let currentSolution = null;
+        let animationId = null;
+
+        // Update speed display
+        document.getElementById('speed').addEventListener('input', (e) => {
+            document.getElementById('speedValue').textContent = e.target.value;
+        });
+
+        async function generateMaze() {
+            const rows = parseInt(document.getElementById('rows').value);
+            const cols = parseInt(document.getElementById('cols').value);
+
+            if (rows < 5 || cols < 5 || rows > 50 || cols > 50) {
+                alert('Please enter dimensions between 5 and 50');
+                return;
+            }
+
+            showLoading(true);
+            disableButtons(true);
+
+            try {
+                const response = await fetch(`${API_BASE}/generate?rows=${rows}&cols=${cols}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(`Error: ${data.error}`);
+                    return;
+                }
+
+                currentMaze = data;
+                currentSolution = null;
+                drawMaze(data.maze);
+
+                document.getElementById('statSize').textContent = `${data.rows}×${data.cols}`;
+                document.getElementById('statAlgo').textContent = '-';
+                document.getElementById('statSteps').textContent = '-';
+                document.getElementById('statPath').textContent = '-';
+
+                document.getElementById('btnBfs').disabled = false;
+                document.getElementById('btnDfs').disabled = false;
+                document.getElementById('btnReset').disabled = false;
+
+            } catch (error) {
+                alert(`Failed to generate maze: ${error.message}`);
+            } finally {
+                showLoading(false);
+                disableButtons(false);
+            }
+        }
+
+        async function solveMaze(method) {
+            if (!currentMaze) {
+                alert('Please generate a maze first');
+                return;
+            }
+
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+
+            showLoading(true);
+            disableButtons(true);
+
+            try {
+                const response = await fetch(`${API_BASE}/solve?method=${method}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentMaze)
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(`Error: ${data.error}`);
+                    return;
+                }
+
+                currentSolution = data;
+                
+                document.getElementById('statAlgo').textContent = method.toUpperCase();
+                document.getElementById('statSteps').textContent = data.steps;
+                document.getElementById('statPath').textContent = data.path.length;
+
+                await animateSolution(data);
+
+            } catch (error) {
+                alert(`Failed to solve maze: ${error.message}`);
+            } finally {
+                showLoading(false);
+                disableButtons(false);
+            }
+        }
+
+        function resetVisualization() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+
+            if (currentMaze) {
+                drawMaze(currentMaze.maze);
+                document.getElementById('statAlgo').textContent = '-';
+                document.getElementById('statSteps').textContent = '-';
+                document.getElementById('statPath').textContent = '-';
+            }
+        }
+
+        function drawMaze(maze) {
+            const rows = maze.length;
+            const cols = maze[0].length;
+            const cellSize = Math.min(canvas.width / cols, canvas.height / rows);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = c * cellSize;
+                    const y = r * cellSize;
+
+                    ctx.fillStyle = maze[r][c] === 1 ? '#FFFFFF' : '#000000';
+                    ctx.fillRect(x, y, cellSize, cellSize);
+
+                    ctx.strokeStyle = '#CCCCCC';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                }
+            }
+
+            // Draw start (green) and end (red)
+            if (currentMaze) {
+                const [sr, sc] = currentMaze.start;
+                const [er, ec] = currentMaze.end;
+
+                ctx.fillStyle = '#00AA00';
+                ctx.fillRect(sc * cellSize + 2, sr * cellSize + 2, cellSize - 4, cellSize - 4);
+
+                ctx.fillStyle = '#AA0000';
+                ctx.fillRect(ec * cellSize + 2, er * cellSize + 2, cellSize - 4, cellSize - 4);
+            }
+        }
+
+        async function animateSolution(solution) {
+            const maze = currentMaze.maze;
+            const rows = maze.length;
+            const cols = maze[0].length;
+            const cellSize = Math.min(canvas.width / cols, canvas.height / rows);
+
+            drawMaze(maze);
+
+            const speed = parseInt(document.getElementById('speed').value);
+            const delay = 101 - speed; // Inverse for intuitive slider
+
+            // Animate visited cells
+            for (let i = 0; i < solution.visited.length; i++) {
+                const [r, c] = solution.visited[i];
+                const x = c * cellSize;
+                const y = r * cellSize;
+
+                ctx.fillStyle = '#4A90E2';
+                ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+
+                if (delay > 5) {
+                    await sleep(delay);
+                }
+            }
+
+            // Animate solution path
+            for (let i = 0; i < solution.path.length; i++) {
+                const [r, c] = solution.path[i];
+                const x = c * cellSize;
+                const y = r * cellSize;
+
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+
+                if (delay > 5) {
+                    await sleep(delay * 2);
+                }
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingMsg').style.display = show ? 'block' : 'none';
+        }
+
+        function disableButtons(disable) {
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (!disable || btn.id !== 'btnReset') {
+                    btn.disabled = disable;
+                }
+            });
+        }
+
+        // Initialize
+        window.onload = () => {
+            drawMaze([[0]]);
+        };
+    </script>
+</body>
+</html>
